@@ -1,0 +1,23 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+        minimum-version-age: 7
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python-deps:
+        patterns: ["*"]
+        exclude-patterns: ["homeassistant"]
+        minimum-version-age: 7
+      homeassistant:
+        patterns: ["homeassistant"]
+        minimum-version-age: 90

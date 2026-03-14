@@ -1,0 +1,13 @@
+{
+  "locations": [
+    {
+      "bikeId": "aabbccdd-1111-2222-3333-444455556666",
+      "detectedAt": "2026-01-15T18:30:00Z",
+      "latitude": 48.8566,
+      "longitude": 2.3522,
+      "altitude": 35.0,
+      "horizontalAccuracy": 10.5,
+      "createdAt": "2026-01-15T18:35:00.000000Z"
+    }
+  ]
+}

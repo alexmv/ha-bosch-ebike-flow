@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bosch eBike Flow Login",
+        "description": "Open the link below to log in with your Bosch / SingleKey ID account:\n\n**[Log in to Bosch eBike Flow]({auth_url})**\n\nAfter logging in, the browser will show a page that tries (and fails) to open the eBike app. You will need the **authorization code** from that page — see the next step for how to find it.\n\nClick **Submit** once you have logged in."
+      },
+      "code": {
+        "title": "Enter Authorization Code",
+        "description": "After logging in, find the authorization code using one of these methods:\n\n1. **View Page Source** (Ctrl+U / Cmd+U) — look for `name=\"code\" value=\"...\"` and copy the value\n2. **Browser Console** (F12 → Console) — paste: `document.querySelector('input[name=code]').value`\n3. **Address bar** — if your browser shows the redirect URL, copy the full URL or just the `code=` value\n\nPaste the code (or full redirect URL) below.",
+        "data": {
+          "code": "Authorization code"
+        },
+        "data_description": {
+          "code": "The authorization code from the login page, or the full redirect URL"
+        }
+      }
+    },
+    "error": {
+      "invalid_code": "Could not find an authorization code in the input.",
+      "token_exchange_failed": "Failed to exchange the code for a token. The code may have expired — please try again.",
+      "api_error": "Authenticated successfully but could not connect to the Bosch eBike API."
+    },
+    "abort": {
+      "already_configured": "This account is already configured."
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "chargerConnected": false,
+  "chargerConnectedLatestUpdate": "2026-01-01T12:00:00.000000Z",
+  "chargingActive": false,
+  "chargingActiveLatestUpdate": "2026-01-01T12:00:00.000000Z",
+  "odometer": 2037434,
+  "odometerLatestUpdate": "2026-01-01T12:00:00.000000Z",
+  "reachableRange": [52, 38, 25, 21],
+  "reachableRangeLatestUpdate": "2026-01-01T12:00:00.000000Z",
+  "remainingChargingTime": null,
+  "remainingChargingTimeLatestUpdate": null,
+  "remainingEnergyForRider": 4620,
+  "remainingEnergyForRiderLatestUpdate": "2026-01-01T12:00:00.000000Z",
+  "stateOfCharge": 92,
+  "stateOfChargeLatestUpdate": "2026-01-01T12:00:00.000000Z"
+}

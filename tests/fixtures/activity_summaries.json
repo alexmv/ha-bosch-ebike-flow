@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "total": 352,
+    "pages": 176
+  },
+  "data": [
+    {
+      "id": "aaaa1111-bbbb-cccc-dddd-eeeeeeee0001",
+      "type": "ActivitySummaryDto",
+      "attributes": {
+        "startTime": 1773431458,
+        "timeZoneOfActivity": "America/New_York",
+        "endTime": 1773432489,
+        "durationWithoutStops": 713,
+        "title": "Evening ride",
+        "activityType": "",
+        "bikeId": "aabbccdd-1111-2222-3333-444455556666",
+        "startOdometer": 2033061,
+        "distance": 4369,
+        "averageSpeed": 22.06,
+        "maximumSpeed": 37.77,
+        "averageCadence": 81.0,
+        "maximumCadence": 105.0,
+        "averageRiderPower": 161.0,
+        "maximumRiderPower": 387.0,
+        "averageHeartRate": null,
+        "maximumHeartRate": null,
+        "elevationGain": 11,
+        "elevationLoss": 13,
+        "caloriesBurnt": 82.0,
+        "totalDriverConsumptionPercentage": null,
+        "totalBatteryConsumptionPercentage": null,
+        "brakeEvents": {
+          "amountOfNormalBrakeEvents": 33,
+          "amountOfAbsInterventionEvents": 0
+        },
+        "assistModeUsage": [],
+        "riderEnergyShare": 37,
+        "co2EmissionsGrams": 13.107,
+        "co2EmissionsCarEquivalentGrams": 725.254,
+        "trickStatistics": null
+      },
+      "relationships": {},
+      "links": {}
+    },
+    {
+      "id": "aaaa1111-bbbb-cccc-dddd-eeeeeeee0002",
+      "type": "ActivitySummaryDto",
+      "attributes": {
+        "startTime": 1773405322,
+        "timeZoneOfActivity": "America/New_York",
+        "endTime": 1773408251,
+        "durationWithoutStops": 832,
+        "title": "Morning commute",
+        "activityType": "",
+        "bikeId": "aabbccdd-1111-2222-3333-444455556666",
+        "startOdometer": 2028595,
+        "distance": 4464,
+        "averageSpeed": 19.31,
+        "maximumSpeed": 36.14,
+        "averageCadence": 80.0,
+        "maximumCadence": 101.0,
+        "averageRiderPower": 142.0,
+        "maximumRiderPower": 328.0,
+        "averageHeartRate": null,
+        "maximumHeartRate": null,
+        "elevationGain": 19,
+        "elevationLoss": 23,
+        "caloriesBurnt": 83.0,
+        "totalDriverConsumptionPercentage": null,
+        "totalBatteryConsumptionPercentage": null,
+        "brakeEvents": {
+          "amountOfNormalBrakeEvents": 32,
+          "amountOfAbsInterventionEvents": 0
+        },
+        "assistModeUsage": [],
+        "riderEnergyShare": 37,
+        "co2EmissionsGrams": 13.392,
+        "co2EmissionsCarEquivalentGrams": 741.024,
+        "trickStatistics": null
+      },
+      "relationships": {},
+      "links": {}
+    }
+  ],
+  "links": {
+    "next": "https://obc-rider-activity.prod.connected-biking.cloud/v1/activity?page=1&size=2",
+    "self": "https://obc-rider-activity.prod.connected-biking.cloud/v1/activity",
+    "last": "https://obc-rider-activity.prod.connected-biking.cloud/v1/activity?page=175&size=2",
+    "first": "https://obc-rider-activity.prod.connected-biking.cloud/v1/activity?page=0&size=2"
+  }
+}

@@ -1,0 +1,99 @@
+[
+  {
+    "id": "aabbccdd-1111-2222-3333-444455556666",
+    "antiLockBrakeSystem": null,
+    "batteries": [
+      {
+        "bootloaderSoftwareVersion": "1.7.0",
+        "hardwareSoftwareVersion": "1.3.0",
+        "hardwareVersion": "4.0.1",
+        "partNumber": "EB1210004R",
+        "productCode": "BBP3575",
+        "serialNumber": "00000-0000-00-000-00-0000",
+        "softwareVersion": "17.8.3",
+        "createdAt": "2025-01-01T00:00:00.000000Z",
+        "manufacturingDate": "2023-01-01",
+        "productName": "PowerPack 725 Frame",
+        "issues": null,
+        "supportedFeatures": null,
+        "batteryLevel": null,
+        "deliveredWhOverLifetime": 20742,
+        "isChargerConnected": null,
+        "isCharging": null,
+        "isLightReserveReached": null,
+        "numberOfFullChargeCycles": {
+          "offBike": 36.0,
+          "onBike": 0.0,
+          "total": 36.1
+        },
+        "remainingEnergy": null,
+        "timeInBalancing": null,
+        "totalEnergy": 560.0
+      }
+    ],
+    "brandName": "Riese & M\u00fcller",
+    "collectionTime": null,
+    "connectedModule": {
+      "bootloaderSoftwareVersion": "3.1.0",
+      "hardwareSoftwareVersion": "6.5.0",
+      "hardwareVersion": "7.2.0",
+      "partNumber": "EB1310000B",
+      "productCode": "BCM3100",
+      "serialNumber": "00000-0000-00-000-00-0000",
+      "softwareVersion": "17.3.4",
+      "createdAt": "2025-01-01T00:00:00.000000Z",
+      "manufacturingDate": "2023-01-01",
+      "productName": "ConnectModule",
+      "issues": null,
+      "supportedFeatures": null,
+      "alarmFeatureSettings": null,
+      "isAlarmFeatureEnabled": true,
+      "isTransportationModeActive": null,
+      "numberOfMotionAlertsLifetime": null,
+      "numberOfTheftAlertsLifetime": null
+    },
+    "createdAt": "2025-01-01T00:00:00.000000Z",
+    "driveUnit": {
+      "bootloaderSoftwareVersion": "1.2.3",
+      "hardwareSoftwareVersion": "0.1.0",
+      "hardwareVersion": "1.0.0",
+      "partNumber": "EB11100001",
+      "productCode": "BDU3741",
+      "serialNumber": "00000-0000-00-000-00-0000",
+      "softwareVersion": "17.16.0",
+      "createdAt": "2025-01-01T00:00:00.000000Z",
+      "manufacturingDate": "2023-01-01",
+      "productName": "Drive Unit Cargo Line",
+      "issues": null,
+      "supportedFeatures": null,
+      "bikeCategory": "Cargo",
+      "isBcmCompatible": true,
+      "lock": {
+        "isEnabled": true,
+        "isLocked": null
+      },
+      "maxAssistanceSpeed": 32.0,
+      "oemBrandIdentifier": "RIE-RIE-RIESEUNDMUELLER",
+      "oemBrandName": "Riese & M\u00fcller",
+      "powerOnTime": {
+        "total": 202,
+        "withMotorSupport": 202
+      },
+      "productLine": "Cargo Line",
+      "totalDistanceTraveled": 2037430.0,
+      "tuningDetection": {
+        "counter": 0,
+        "isDetected": false
+      }
+    },
+    "headUnit": {
+      "productName": "Kiox 500",
+      "productCode": "BHU3700"
+    },
+    "mediaAssets": null,
+    "remoteControl": {
+      "productName": "LED Remote",
+      "productCode": "BRC3600"
+    }
+  }
+]

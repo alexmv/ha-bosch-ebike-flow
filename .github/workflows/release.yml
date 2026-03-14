@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Update manifest version from tag
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          jq --arg v "$VERSION" '.version = $v' custom_components/bosch_ebike/manifest.json > tmp.json
+          mv tmp.json custom_components/bosch_ebike/manifest.json
+
+      - name: Package custom_components
+        run: |
+          cd custom_components
+          zip -r ../bosch_ebike.zip bosch_ebike/
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" bosch_ebike.zip --clobber

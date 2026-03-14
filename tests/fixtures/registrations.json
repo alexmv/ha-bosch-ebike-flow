@@ -1,0 +1,10 @@
+{
+  "registrations": [
+    {
+      "bikeId": "aabbccdd-1111-2222-3333-444455556666",
+      "bcmPartNumber": "EB1310000B",
+      "bcmSerialNumber": "00000-0000-00-000-00-0000",
+      "bcmProductCode": "BCM3100"
+    }
+  ]
+}
