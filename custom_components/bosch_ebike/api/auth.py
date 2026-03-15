@@ -15,11 +15,11 @@ REDIRECT_URI = "onebikeapp-android://com.bosch.ebike.flow/login"
 
 
 def generate_auth_url() -> tuple[str, str]:
-    """Generate an OAuth2 PKCE authorization URL with form_post response mode.
+    """Generate an OAuth2 PKCE authorization URL.
 
-    Uses response_mode=form_post so that after login, the server renders an
-    HTML page containing the auth code (instead of a 302 redirect to a custom
-    scheme that browsers can't display).
+    After login, the Bosch server redirects to onebikeapp-android://...?code=XXX.
+    Browsers can't handle the custom scheme, so the user must extract the code
+    from the redirect URL via the browser's Network tab.
 
     Returns (auth_url, code_verifier) tuple.
     """
@@ -34,7 +34,6 @@ def generate_auth_url() -> tuple[str, str]:
         url=AUTH_URL,
         code_verifier=code_verifier,
         kc_idp_hint="skid",
-        response_mode="form_post",
     )
     return url, code_verifier
 

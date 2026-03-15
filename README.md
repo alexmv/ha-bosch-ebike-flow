@@ -28,13 +28,13 @@ Copy `custom_components/bosch_ebike/` into your HA `config/custom_components/` d
 ## Setup
 
 1. Go to **Settings → Integrations → Add Integration → Bosch eBike Flow**
-2. Click the login link to sign in with your Bosch / SingleKey ID account
-3. After logging in, the browser shows a page that fails to open the eBike app
-4. Find the authorization code from that page using one of these methods:
-   - **View Page Source** (Ctrl+U) — look for `name="code" value="..."`
-   - **Browser Console** (F12 → Console) — paste: `document.querySelector('input[name=code]').value`
-5. Paste the code into the HA form
-6. The integration discovers your bikes and creates entities automatically
+2. Open Developer Tools (**F12**), go to the **Network** tab, and enable **Preserve log**
+3. Click the login link to sign in with your Bosch / SingleKey ID account
+4. After logging in, the browser will fail to open the redirect — this is expected
+5. In the Network tab, find the **302** redirect request (to a URL containing `login-actions`)
+6. Click it → **Response Headers** → copy the `Location` value (starts with `onebikeapp-android://`, contains `code=`)
+7. Paste the full URL (or just the code value) into the HA form
+8. The integration discovers your bikes and creates entities automatically
 
 ## Entities
 
