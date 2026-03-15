@@ -11,6 +11,8 @@ from custom_components.bosch_ebike.sensor import (
     SENSOR_DESCRIPTIONS,
     _get_battery,
     _get_charge_cycles,
+    _get_range_attrs,
+    _get_range_auto,
     _get_ride_timestamp,
 )
 
@@ -62,6 +64,33 @@ class TestProfileSensors:
         for desc in SENSOR_DESCRIPTIONS:
             if desc.key in profile_keys:
                 assert desc.value_fn(data) is None, desc.key
+
+
+class TestRangeSensor:
+    def test_returns_auto_range(self, bike_data):
+        # Fixture has reachableRange: [52, 38, 25, 21]; AUTO is index 1.
+        assert _get_range_auto(bike_data[BIKE_ID]) == 38.0
+
+    def test_attrs_contain_all_modes(self, bike_data):
+        attrs = _get_range_attrs(bike_data[BIKE_ID])
+        assert attrs == {
+            "range_eco_km": 52,
+            "range_auto_km": 38,
+            "range_sport_km": 25,
+            "range_turbo_km": 21,
+        }
+
+    def test_none_when_no_battery(self):
+        assert _get_range_auto({"battery": None}) is None
+        assert _get_range_attrs({"battery": None}) == {}
+
+    def test_none_when_range_missing(self):
+        assert _get_range_auto({"battery": {}}) is None
+        assert _get_range_attrs({"battery": {}}) == {}
+
+    def test_description_has_attrs_fn(self):
+        desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "estimated_range")
+        assert desc.attrs_fn is not None
 
 
 class TestRideSensors:

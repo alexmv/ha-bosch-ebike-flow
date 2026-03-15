@@ -37,6 +37,7 @@ class BoschEBikeSensorEntityDescription(SensorEntityDescription):
     """Describe a Bosch eBike sensor."""
 
     value_fn: Callable[[dict[str, Any]], Any]
+    attrs_fn: Callable[[dict[str, Any]], dict[str, Any]] | None = None
 
 
 # --- Value extractors: battery / SoC ---
@@ -87,6 +88,36 @@ def _get_battery_field(field: str) -> Callable[[dict[str, Any]], Any]:
 def _get_charge_cycles(data: dict[str, Any]) -> float | None:
     cycles = _get_battery_field("numberOfFullChargeCycles")(data)
     return cycles.get("total") if isinstance(cycles, dict) else None
+
+
+# --- Value extractors: range estimate ---
+
+# reachableRange array from the SoC API: [ECO, AUTO, SPORT, TURBO] in km.
+_RANGE_MODE_NAMES = ("eco", "auto", "sport", "turbo")
+_RANGE_AUTO_INDEX = 1
+
+
+def _get_range_auto(data: dict[str, Any]) -> float | None:
+    battery = data.get("battery")
+    if not isinstance(battery, dict):
+        return None
+    ranges = battery.get("reachableRange")
+    if isinstance(ranges, list) and len(ranges) > _RANGE_AUTO_INDEX:
+        val = ranges[_RANGE_AUTO_INDEX]
+        return float(val) if val is not None else None
+    return None
+
+
+def _get_range_attrs(data: dict[str, Any]) -> dict[str, Any]:
+    battery = data.get("battery")
+    if not isinstance(battery, dict):
+        return {}
+    ranges = battery.get("reachableRange")
+    if not isinstance(ranges, list):
+        return {}
+    return {
+        f"range_{name}_km": ranges[i] for i, name in enumerate(_RANGE_MODE_NAMES) if i < len(ranges)
+    }
 
 
 # --- Value extractors: ride-based ---
@@ -161,6 +192,15 @@ SENSOR_DESCRIPTIONS: tuple[BoschEBikeSensorEntityDescription, ...] = (
         native_unit_of_measurement="Wh",
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=_get_battery_field("deliveredWhOverLifetime"),
+    ),
+    BoschEBikeSensorEntityDescription(
+        key="estimated_range",
+        name="Estimated Range",
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=SensorDeviceClass.DISTANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_get_range_auto,
+        attrs_fn=_get_range_attrs,
     ),
     # Ride-based sensors (available when activity API works)
     BoschEBikeSensorEntityDescription(
@@ -295,9 +335,22 @@ class BoschEBikeSensor(CoordinatorEntity[BoschEBikeDataCoordinator], SensorEntit
     @property
     def native_value(self) -> Any:
         """Return the sensor value."""
-        if self.coordinator.data is None:
-            return None
-        bike_data = self.coordinator.data.get(self._bike_id)
+        bike_data = self._bike_data()
         if bike_data is None:
             return None
         return self.entity_description.value_fn(bike_data)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return extra state attributes, if the description provides them."""
+        if self.entity_description.attrs_fn is None:
+            return None
+        bike_data = self._bike_data()
+        if bike_data is None:
+            return None
+        return self.entity_description.attrs_fn(bike_data)
+
+    def _bike_data(self) -> dict[str, Any] | None:
+        if self.coordinator.data is None:
+            return None
+        return self.coordinator.data.get(self._bike_id)
