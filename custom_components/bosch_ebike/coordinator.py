@@ -26,6 +26,9 @@ _T = TypeVar("_T")
 # Refresh the token when it expires within this many seconds.
 _TOKEN_REFRESH_MARGIN = 300
 
+# How many pages of rides to read, looking for each bike's latest ride.
+_MAX_RIDE_PAGES = 5
+
 
 def _retry_after(response: requests.Response, update_interval: timedelta | None) -> float:
     """Seconds until the next update, honoring a Retry-After header.
@@ -169,16 +172,29 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
     async def _async_update_data(self) -> dict[str, Any]:
         self._client = await self._get_client()
 
-        # Fetch activity summaries once for all bikes (sorted newest-first).
+        # Fetch activity summaries, newest first.  The API has no per-bike
+        # filter, so page through them until every bike has a ride -- but only
+        # so far, so a bike that is never ridden doesn't make us read the
+        # account's entire history on every poll.
         rides_by_bike: dict[str, dict] = {}
         try:
-            rides_resp = await self._call(lambda c: c.activity.get_summaries)
-            for ride in rides_resp.get("data", []):
-                attrs = ride.get("attributes", ride)
-                bike_id = attrs.get("bikeId")
-                # First match per bike is the newest (sorted by -startTime).
-                if bike_id and bike_id not in rides_by_bike:
-                    rides_by_bike[bike_id] = attrs
+            for page in range(_MAX_RIDE_PAGES):
+                rides_resp = await self._call(lambda c: c.activity.get_summaries, page)
+                rides = rides_resp.get("data", [])
+                for ride in rides:
+                    attrs = ride.get("attributes", ride)
+                    bike_id = attrs.get("bikeId")
+                    # First match per bike is the newest (sorted by -startTime).
+                    if bike_id and bike_id not in rides_by_bike:
+                        rides_by_bike[bike_id] = attrs
+                pages = (rides_resp.get("meta") or {}).get("pages")
+                if (
+                    rides_by_bike.keys() >= set(self._bike_ids)
+                    or not rides
+                    or not isinstance(pages, int)
+                    or page + 1 >= pages
+                ):
+                    break
         except ConfigEntryAuthFailed, UpdateFailed:
             raise
         except Exception as err:

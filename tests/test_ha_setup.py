@@ -48,7 +48,7 @@ class FakeBikeProfile:
 
 
 class FakeActivity:
-    def get_summaries(self):
+    def get_summaries(self, page=0):
         return _load_fixture("activity_summaries.json")
 
 
