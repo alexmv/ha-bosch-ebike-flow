@@ -60,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             if registrations.get("registrations"):
                 bcm_bike_ids.append(bike_id)
-        except Exception:
+        except Exception:  # noqa: BLE001 - treat any failure as "no BCM"
             _LOGGER.debug("No BCM registration for bike %s", bike_id)
 
     # Shared token manager prevents coordinator refresh races.

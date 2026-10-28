@@ -41,6 +41,7 @@ select = [
     "ASYNC", # flake8-async
     "PT",    # flake8-pytest-style
     "S",     # flake8-bandit
+    "BLE",   # flake8-blind-except
 ]
 ignore = [
     "E501",   # line length handled by formatter

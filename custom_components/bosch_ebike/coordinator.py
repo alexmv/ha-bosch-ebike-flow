@@ -197,7 +197,7 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
                     break
         except ConfigEntryAuthFailed, UpdateFailed:
             raise
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001 - one failed fetch must not fail the update
             _LOGGER.warning("Failed to fetch activity summaries: %s", err)
 
         data: dict[str, Any] = {}
@@ -208,7 +208,7 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
                 bike_data["profile"] = await self._call(lambda c: c.bike_profile.get, bike_id)
             except ConfigEntryAuthFailed, UpdateFailed:
                 raise
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001 - one failed fetch must not fail the update
                 _LOGGER.warning("Failed to fetch profile for bike %s: %s", bike_id, err)
                 bike_data["profile"] = None
 
@@ -218,7 +218,7 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
                 )
             except ConfigEntryAuthFailed, UpdateFailed:
                 raise
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001 - one failed fetch must not fail the update
                 # A 404 is normal: there is no state of charge while the bike
                 # has been offline for a while.
                 log = _LOGGER.debug if _is_not_found(err) else _LOGGER.warning
@@ -261,7 +261,7 @@ class BoschEBikeLocationCoordinator(_BoschEBikeCoordinator):
                 )
             except ConfigEntryAuthFailed, UpdateFailed:
                 raise
-            except Exception as err:
+            except Exception as err:  # noqa: BLE001 - one failed fetch must not fail the update
                 # A 404 is normal: the bike has not reported a location yet.
                 log = _LOGGER.debug if _is_not_found(err) else _LOGGER.warning
                 log("Failed to fetch location for bike %s: %s", bike_id, err)
