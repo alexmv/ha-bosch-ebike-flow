@@ -22,7 +22,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
-      - run: uv sync --extra dev
+      - run: uv sync --locked --extra dev
       - run: uv run ruff check custom_components/ tests/
       - run: uv run ruff format --check custom_components/ tests/
       - run: uv run codespell custom_components/ tests/ README.md
@@ -36,7 +36,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@e58605a9b6da7c637471fab8847a5e5a6b8df081 # v5
-      - run: uv sync --extra dev
+      - run: uv sync --locked --extra dev
       - run: uv run pytest tests/ -v
 
   validate-hacs:
