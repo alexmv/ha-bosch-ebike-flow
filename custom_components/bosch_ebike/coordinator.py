@@ -6,6 +6,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Any, TypeVar
 
 import requests
@@ -24,6 +25,20 @@ _T = TypeVar("_T")
 
 # Refresh the token when it expires within this many seconds.
 _TOKEN_REFRESH_MARGIN = 300
+
+
+def _retry_after(response: requests.Response, update_interval: timedelta | None) -> float:
+    """Seconds until the next update, honoring a Retry-After header.
+
+    Never returns less than the normal update interval: a short Retry-After
+    must not make us poll more often than usual.
+    """
+    try:
+        seconds = float(response.headers.get("Retry-After", ""))
+    except ValueError:
+        seconds = 0
+    minimum = update_interval.total_seconds() if update_interval else 0
+    return max(seconds, minimum)
 
 
 class TokenManager:
@@ -103,14 +118,21 @@ class _BoschEBikeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Make an API call in the executor.
 
         If the access token is rejected before it is due to expire, refresh it
-        and retry once.
+        and retry once.  If we are rate-limited, abandon this update and wait
+        at least as long as the server asks before the next one.
         """
         if self._client is None:
             self._client = await self._get_client()
         try:
             return await self.hass.async_add_executor_job(method(self._client), *args)
         except requests.HTTPError as err:
-            if err.response is None or err.response.status_code != 401:
+            status = err.response.status_code if err.response is not None else None
+            if status == 429:
+                raise UpdateFailed(
+                    "Rate limited by the Bosch cloud",
+                    retry_after=_retry_after(err.response, self.update_interval),
+                ) from err
+            if status != 401:
                 raise
         _LOGGER.debug("Access token was rejected; refreshing and retrying")
         self._client = await self._get_client(force_refresh=True)
@@ -149,7 +171,7 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
                 # First match per bike is the newest (sorted by -startTime).
                 if bike_id and bike_id not in rides_by_bike:
                     rides_by_bike[bike_id] = attrs
-        except ConfigEntryAuthFailed:
+        except ConfigEntryAuthFailed, UpdateFailed:
             raise
         except Exception as err:
             _LOGGER.warning("Failed to fetch activity summaries: %s", err)
@@ -160,7 +182,7 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
 
             try:
                 bike_data["profile"] = await self._call(lambda c: c.bike_profile.get, bike_id)
-            except ConfigEntryAuthFailed:
+            except ConfigEntryAuthFailed, UpdateFailed:
                 raise
             except Exception as err:
                 _LOGGER.warning("Failed to fetch profile for bike %s: %s", bike_id, err)
@@ -170,7 +192,7 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
                 bike_data["battery"] = await self._call(
                     lambda c: c.bike_profile.get_state_of_charge, bike_id
                 )
-            except ConfigEntryAuthFailed:
+            except ConfigEntryAuthFailed, UpdateFailed:
                 raise
             except Exception as err:
                 _LOGGER.warning("Failed to fetch SoC for bike %s: %s", bike_id, err)
@@ -210,7 +232,7 @@ class BoschEBikeLocationCoordinator(_BoschEBikeCoordinator):
                 data[bike_id] = await self._call(
                     lambda c: c.theft_detection.get_latest_locations, bike_id
                 )
-            except ConfigEntryAuthFailed:
+            except ConfigEntryAuthFailed, UpdateFailed:
                 raise
             except Exception:
                 _LOGGER.warning("Failed to fetch location for bike %s", bike_id)

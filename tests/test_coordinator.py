@@ -8,17 +8,19 @@ import pytest
 import requests
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.bosch_ebike.const import DOMAIN
+from custom_components.bosch_ebike.const import DATA_UPDATE_INTERVAL, DOMAIN
 from custom_components.bosch_ebike.coordinator import BoschEBikeDataCoordinator
 
 from .conftest import BIKE_ID
 
 
-def _http_error(status: int) -> requests.HTTPError:
+def _http_error(status: int, headers: dict[str, str] | None = None) -> requests.HTTPError:
     response = requests.Response()
     response.status_code = status
+    response.headers.update(headers or {})
     return requests.HTTPError(f"{status} error", response=response)
 
 
@@ -83,3 +85,29 @@ class TestRetryOnUnauthorized:
 
         with pytest.raises(ConfigEntryAuthFailed):
             await _coordinator(hass, token_manager)._async_update_data()
+
+
+class TestRateLimit:
+    @pytest.mark.parametrize(
+        ("headers", "expected"),
+        [
+            ({"Retry-After": "900"}, 900),
+            ({"Retry-After": "10"}, DATA_UPDATE_INTERVAL.total_seconds()),
+            (
+                {"Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT"},
+                DATA_UPDATE_INTERVAL.total_seconds(),
+            ),
+            ({}, DATA_UPDATE_INTERVAL.total_seconds()),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_backs_off(self, hass: HomeAssistant, headers, expected) -> None:
+        client = _client([_http_error(429, headers)])
+        token_manager = MagicMock()
+        token_manager.get_client = AsyncMock(return_value=client)
+
+        with pytest.raises(UpdateFailed) as exc_info:
+            await _coordinator(hass, token_manager)._async_update_data()
+
+        assert exc_info.value.retry_after == expected
+        client.bike_profile.get_state_of_charge.assert_not_called()
