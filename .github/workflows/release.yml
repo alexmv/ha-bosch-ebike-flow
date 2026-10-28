@@ -4,12 +4,14 @@ on:
   release:
     types: [published]
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   release:
+    name: Attach integration zip to release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # upload the zip as a release asset
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
