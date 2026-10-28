@@ -13,7 +13,7 @@ pytest_plugins = ["pytest_homeassistant_custom_component"]
 @pytest.fixture(autouse=True)
 def auto_enable_custom_integrations(enable_custom_integrations):
     """Enable custom integrations for all tests."""
-    yield
+    return
 
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -25,32 +25,32 @@ def _load_fixture(name: str) -> dict | list:
     return json.loads((FIXTURES_DIR / name).read_text())
 
 
-@pytest.fixture()
+@pytest.fixture
 def bike_profiles():
     return _load_fixture("bike_profiles.json")
 
 
-@pytest.fixture()
+@pytest.fixture
 def state_of_charge():
     return _load_fixture("state_of_charge.json")
 
 
-@pytest.fixture()
+@pytest.fixture
 def activity_summaries():
     return _load_fixture("activity_summaries.json")
 
 
-@pytest.fixture()
+@pytest.fixture
 def registrations():
     return _load_fixture("registrations.json")
 
 
-@pytest.fixture()
+@pytest.fixture
 def latest_locations():
     return _load_fixture("latest_locations.json")
 
 
-@pytest.fixture()
+@pytest.fixture
 def bike_data(bike_profiles, state_of_charge, activity_summaries):
     """Coordinator-shaped data dict for a single bike."""
     ride_attrs = activity_summaries["data"][0]["attributes"]
@@ -63,7 +63,7 @@ def bike_data(bike_profiles, state_of_charge, activity_summaries):
     }
 
 
-@pytest.fixture()
+@pytest.fixture
 def location_data(latest_locations):
     """Location coordinator-shaped data dict for a single bike."""
     return {BIKE_ID: latest_locations}

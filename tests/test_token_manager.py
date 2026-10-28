@@ -12,7 +12,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from custom_components.bosch_ebike.coordinator import _TOKEN_REFRESH_MARGIN, TokenManager
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_hass():
     """Lightweight mock hass (not the full HA fixture — just enough for TokenManager)."""
     h = MagicMock()
@@ -20,7 +20,7 @@ def mock_hass():
     return h
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_entry():
     return MagicMock()
 

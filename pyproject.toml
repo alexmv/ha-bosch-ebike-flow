@@ -38,6 +38,8 @@ select = [
     "SIM",   # flake8-simplify
     "TCH",   # flake8-type-checking
     "RUF",   # ruff-specific
+    "ASYNC", # flake8-async
+    "PT",    # flake8-pytest-style
 ]
 ignore = [
     "E501",   # line length handled by formatter
