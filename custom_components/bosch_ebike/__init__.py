@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import logging
 
+import requests
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 
 from .api.auth import create_session, refresh_session_token
 from .api.client import BoschEBikeClient
@@ -37,7 +40,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client = BoschEBikeClient(session)
 
     # Fetch bike list — response is always a list of profile dicts with "id".
-    bikes = await hass.async_add_executor_job(client.bike_profile.get_all)
+    # A failure here is usually Home Assistant starting before the host has
+    # DNS or a route (the common case after a reboot). ConfigEntryNotReady
+    # makes HA retry the setup with backoff instead of leaving the entry in a
+    # permanent setup error that needs a manual reload.
+    try:
+        bikes = await hass.async_add_executor_job(client.bike_profile.get_all)
+    except requests.exceptions.RequestException as err:
+        raise ConfigEntryNotReady(f"Cannot reach Bosch eBike Flow: {err}") from err
     bike_ids = [b["id"] for b in bikes]
 
     # Detect BCM-registered bikes.
