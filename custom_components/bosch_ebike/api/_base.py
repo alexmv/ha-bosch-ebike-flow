@@ -17,7 +17,10 @@ _DEFAULT_HEADERS = {
 def _check_response(resp):
     """Log response body on error, then raise."""
     if not resp.ok:
-        _LOGGER.warning(
+        # Some endpoints use 404 to mean "no data yet"; the caller decides
+        # whether that is worth a warning.
+        log = _LOGGER.debug if resp.status_code == 404 else _LOGGER.warning
+        log(
             "API error %s %s — body: %s",
             resp.status_code,
             resp.url,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -111,3 +112,31 @@ class TestRateLimit:
 
         assert exc_info.value.retry_after == expected
         client.bike_profile.get_state_of_charge.assert_not_called()
+
+
+class TestNotFound:
+    @pytest.mark.asyncio
+    async def test_soc_404_is_not_a_warning(self, hass: HomeAssistant, caplog) -> None:
+        client = _client([{"id": BIKE_ID}])
+        client.bike_profile.get_state_of_charge.side_effect = _http_error(404)
+        token_manager = MagicMock()
+        token_manager.get_client = AsyncMock(return_value=client)
+
+        with caplog.at_level(logging.WARNING):
+            data = await _coordinator(hass, token_manager)._async_update_data()
+
+        assert data[BIKE_ID]["battery"] is None
+        assert data[BIKE_ID]["profile"] == {"id": BIKE_ID}
+        assert "Failed to fetch SoC" not in caplog.text
+
+    @pytest.mark.asyncio
+    async def test_soc_500_is_a_warning(self, hass: HomeAssistant, caplog) -> None:
+        client = _client([{"id": BIKE_ID}])
+        client.bike_profile.get_state_of_charge.side_effect = _http_error(500)
+        token_manager = MagicMock()
+        token_manager.get_client = AsyncMock(return_value=client)
+
+        with caplog.at_level(logging.WARNING):
+            await _coordinator(hass, token_manager)._async_update_data()
+
+        assert "Failed to fetch SoC" in caplog.text

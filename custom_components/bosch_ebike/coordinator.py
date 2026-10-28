@@ -41,6 +41,14 @@ def _retry_after(response: requests.Response, update_interval: timedelta | None)
     return max(seconds, minimum)
 
 
+def _is_not_found(err: Exception) -> bool:
+    return (
+        isinstance(err, requests.HTTPError)
+        and err.response is not None
+        and err.response.status_code == 404
+    )
+
+
 class TokenManager:
     """Serializes token refresh across coordinators.
 
@@ -195,7 +203,10 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
             except ConfigEntryAuthFailed, UpdateFailed:
                 raise
             except Exception as err:
-                _LOGGER.warning("Failed to fetch SoC for bike %s: %s", bike_id, err)
+                # A 404 is normal: there is no state of charge while the bike
+                # has been offline for a while.
+                log = _LOGGER.debug if _is_not_found(err) else _LOGGER.warning
+                log("Failed to fetch SoC for bike %s: %s", bike_id, err)
                 bike_data["battery"] = None
 
             bike_data["latest_ride"] = rides_by_bike.get(bike_id)
@@ -234,8 +245,10 @@ class BoschEBikeLocationCoordinator(_BoschEBikeCoordinator):
                 )
             except ConfigEntryAuthFailed, UpdateFailed:
                 raise
-            except Exception:
-                _LOGGER.warning("Failed to fetch location for bike %s", bike_id)
+            except Exception as err:
+                # A 404 is normal: the bike has not reported a location yet.
+                log = _LOGGER.debug if _is_not_found(err) else _LOGGER.warning
+                log("Failed to fetch location for bike %s: %s", bike_id, err)
                 data[bike_id] = None
 
         return data

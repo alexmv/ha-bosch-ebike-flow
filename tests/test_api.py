@@ -76,6 +76,17 @@ class TestCheckResponse:
         assert "500" in caplog.text
         assert "something went wrong" in caplog.text
 
+    def test_not_found_is_not_a_warning(self, caplog):
+        resp = MagicMock()
+        resp.ok = False
+        resp.status_code = 404
+        resp.raise_for_status.side_effect = Exception("404")
+
+        with pytest.raises(Exception, match="404"), caplog.at_level(logging.WARNING):
+            _check_response(resp)
+
+        assert caplog.text == ""
+
 
 class TestBoschEBikeClient:
     def test_creates_all_services(self):
