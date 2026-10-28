@@ -25,7 +25,9 @@ def generate_auth_url() -> tuple[str, str]:
     """
     client = OAuth2Session(
         client_id=CLIENT_ID,
-        scope="openid",
+        # offline_access gets an offline refresh token, which is not bound to
+        # the lifetime of the Keycloak SSO session.
+        scope="openid offline_access",
         redirect_uri=REDIRECT_URI,
         code_challenge_method="S256",
     )
