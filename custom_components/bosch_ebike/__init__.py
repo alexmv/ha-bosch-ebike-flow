@@ -8,9 +8,9 @@ import requests
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 
-from .api.auth import create_session, refresh_session_token
+from .api.auth import create_session, is_refresh_token_rejected, refresh_session_token
 from .api.client import BoschEBikeClient
 from .const import DOMAIN
 from .coordinator import (
@@ -32,7 +32,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         session, new_token = await hass.async_add_executor_job(refresh_session_token, token)
         hass.config_entries.async_update_entry(entry, data={**entry.data, "token": new_token})
-    except Exception:
+    except Exception as err:
+        if is_refresh_token_rejected(err):
+            raise ConfigEntryAuthFailed("Bosch rejected the refresh token; log in again") from err
         _LOGGER.debug("Token refresh at setup failed, using existing token")
         session = create_session(token)
 

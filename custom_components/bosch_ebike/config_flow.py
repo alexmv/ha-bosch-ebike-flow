@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from collections.abc import Mapping
+from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlow, ConfigFlowResult
 
 from .api.auth import create_session, exchange_code, generate_auth_url
 from .api.client import BoschEBikeClient
@@ -49,6 +51,21 @@ class BoschEBikeConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, str] | None = None) -> ConfigFlowResult:
         """Step 1: Generate auth URL and show login instructions."""
+        return await self._async_show_login("user", user_input)
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        """Start reauthentication after Bosch rejected the refresh token."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, str] | None = None
+    ) -> ConfigFlowResult:
+        """Show login instructions for reauthentication."""
+        return await self._async_show_login("reauth_confirm", user_input)
+
+    async def _async_show_login(
+        self, step_id: str, user_input: dict[str, str] | None
+    ) -> ConfigFlowResult:
         if self._auth_url is None:
             self._auth_url, self._code_verifier = await self.hass.async_add_executor_job(
                 generate_auth_url
@@ -59,7 +76,7 @@ class BoschEBikeConfigFlow(ConfigFlow, domain=DOMAIN):
 
         assert self._auth_url is not None
         return self.async_show_form(
-            step_id="user",
+            step_id=step_id,
             data_schema=vol.Schema({}),
             description_placeholders={"auth_url": self._auth_url},
         )
@@ -97,6 +114,11 @@ class BoschEBikeConfigFlow(ConfigFlow, domain=DOMAIN):
                         bike_ids = sorted(b["id"] for b in bikes)
                         unique_id = hashlib.sha256(",".join(bike_ids).encode()).hexdigest()[:16]
                         await self.async_set_unique_id(unique_id)
+                        if self.source == SOURCE_REAUTH:
+                            self._abort_if_unique_id_mismatch(reason="wrong_account")
+                            return self.async_update_reload_and_abort(
+                                self._get_reauth_entry(), data_updates={"token": token}
+                            )
                         self._abort_if_unique_id_configured()
 
                         names = [extract_bike_name(b) for b in bikes]

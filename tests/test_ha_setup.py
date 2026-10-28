@@ -6,6 +6,8 @@ import contextlib
 from unittest.mock import MagicMock, patch
 
 import pytest
+from authlib.integrations.requests_client import OAuthError
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -125,6 +127,23 @@ class TestSetupEntry:
         entry_data = hass.data[DOMAIN][entry.entry_id]
         assert entry_data["bcm_bike_ids"] == []
         assert "location_coordinator" not in entry_data
+
+    @pytest.mark.asyncio
+    async def test_rejected_refresh_token_starts_reauth(self, hass: HomeAssistant) -> None:
+        entry = _make_config_entry(hass)
+        with (
+            mock_all_api(),
+            patch(
+                "custom_components.bosch_ebike.refresh_session_token",
+                side_effect=OAuthError(error="invalid_grant"),
+            ),
+        ):
+            assert not await hass.config_entries.async_setup(entry.entry_id)
+            await hass.async_block_till_done()
+
+        assert entry.state is ConfigEntryState.SETUP_ERROR
+        flows = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+        assert [f["context"]["source"] for f in flows] == [SOURCE_REAUTH]
 
 
 class TestUnloadEntry:

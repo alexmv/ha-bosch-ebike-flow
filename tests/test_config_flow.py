@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
 from unittest.mock import patch
 
 import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.bosch_ebike.config_flow import _extract_code
 from custom_components.bosch_ebike.const import DOMAIN
@@ -179,3 +181,52 @@ class TestConfigFlowErrors:
             )
             assert r2["type"] is FlowResultType.ABORT
             assert r2["reason"] == "already_configured"
+
+
+class TestReauthFlow:
+    def _entry(self, hass: HomeAssistant, unique_id: str) -> MockConfigEntry:
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            title="Bosch eBike (Test)",
+            data={"token": {"access_token": "old", "refresh_token": "dead"}},
+            unique_id=unique_id,
+        )
+        entry.add_to_hass(hass)
+        return entry
+
+    async def _reauth(self, hass: HomeAssistant, entry: MockConfigEntry):
+        result = await entry.start_reauth_flow(hass)
+        assert result["type"] is FlowResultType.FORM
+        assert result["step_id"] == "reauth_confirm"
+        result = await hass.config_entries.flow.async_configure(result["flow_id"], user_input={})
+        assert result["step_id"] == "code"
+        return await hass.config_entries.flow.async_configure(
+            result["flow_id"], user_input={"code": "the-auth-code"}
+        )
+
+    @pytest.mark.asyncio
+    async def test_reauth_updates_token(self, hass: HomeAssistant) -> None:
+        unique_id = hashlib.sha256(BIKE_ID.encode()).hexdigest()[:16]
+        entry = self._entry(hass, unique_id)
+        auth_patch, client_patch = _patch_happy_flow()
+        with (
+            auth_patch,
+            client_patch,
+            patch("custom_components.bosch_ebike.async_setup_entry", return_value=True),
+        ):
+            result = await self._reauth(hass, entry)
+
+        assert result["type"] is FlowResultType.ABORT
+        assert result["reason"] == "reauth_successful"
+        assert entry.data["token"] == FAKE_TOKEN
+
+    @pytest.mark.asyncio
+    async def test_reauth_with_other_account_aborts(self, hass: HomeAssistant) -> None:
+        entry = self._entry(hass, "some-other-account")
+        auth_patch, client_patch = _patch_happy_flow()
+        with auth_patch, client_patch:
+            result = await self._reauth(hass, entry)
+
+        assert result["type"] is FlowResultType.ABORT
+        assert result["reason"] == "wrong_account"
+        assert entry.data["token"]["access_token"] == "old"

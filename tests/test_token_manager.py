@@ -6,6 +6,8 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from authlib.integrations.requests_client import OAuthError
+from homeassistant.exceptions import ConfigEntryAuthFailed
 
 from custom_components.bosch_ebike.coordinator import _TOKEN_REFRESH_MARGIN, TokenManager
 
@@ -95,6 +97,23 @@ class TestTokenManager:
             await manager.get_client()
 
         mock_create.assert_called_once()
+        mock_hass.config_entries.async_update_entry.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_rejected_refresh_token_requires_reauth(self, mock_hass, mock_entry):
+        mock_entry.data = {
+            "token": {
+                "access_token": "stale",
+                "refresh_token": "rt",
+                "expires_at": time.time() - 100,
+            }
+        }
+        mock_hass.async_add_executor_job.side_effect = OAuthError(error="invalid_grant")
+
+        manager = TokenManager(mock_hass, mock_entry)
+
+        with pytest.raises(ConfigEntryAuthFailed):
+            await manager.get_client()
         mock_hass.config_entries.async_update_entry.assert_not_called()
 
     @pytest.mark.asyncio

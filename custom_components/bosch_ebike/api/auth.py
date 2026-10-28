@@ -5,7 +5,7 @@ No file I/O — tokens are managed by HA's config entry system.
 
 import requests
 from authlib.common.security import generate_token
-from authlib.integrations.requests_client import OAuth2Session
+from authlib.integrations.requests_client import OAuth2Session, OAuthError
 
 from ._base import REQUEST_TIMEOUT
 
@@ -76,3 +76,12 @@ def refresh_session_token(token: dict) -> tuple[OAuth2Session, dict]:
     client = OAuth2Session(client_id=CLIENT_ID, token={}, default_timeout=REQUEST_TIMEOUT)
     new_token = client.refresh_token(TOKEN_URL, refresh_token=token["refresh_token"])
     return client, dict(new_token)
+
+
+def is_refresh_token_rejected(err: BaseException) -> bool:
+    """Return whether a refresh failure means the user must log in again.
+
+    Keycloak answers an expired or revoked refresh token with invalid_grant.
+    Anything else (network trouble, 5xx) is assumed to be transient.
+    """
+    return isinstance(err, OAuthError) and err.error == "invalid_grant"

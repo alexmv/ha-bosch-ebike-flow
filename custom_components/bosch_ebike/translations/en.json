@@ -5,6 +5,10 @@
         "title": "Bosch eBike Flow Login",
         "description": "**Before you begin:** open Developer Tools (F12), go to the **Network** tab, and enable **Preserve log**.\n\nThen open the link below to log in:\n\n**[Log in to Bosch eBike Flow]({auth_url})**\n\nAfter logging in, the browser will fail to open the redirect URL. This is expected.\n\nClick **Submit** below once you have logged in."
       },
+      "reauth_confirm": {
+        "title": "Log in to Bosch eBike Flow again",
+        "description": "Bosch no longer accepts the saved login, so you need to log in again. First, open Developer Tools (F12), go to the **Network** tab, and enable **Preserve log**.\n\nThen open the link below to log in:\n\n**[Log in to Bosch eBike Flow]({auth_url})**\n\nAfter logging in, the browser will fail to open the redirect URL. This is expected.\n\nClick **Submit** below once you have logged in."
+      },
       "code": {
         "title": "Enter Authorization Code",
         "description": "In the Network tab (F12), find the redirect request (status **302**, to a URL containing `login-actions`). Click it, then in the **Response Headers** find the `Location` value — it starts with `onebikeapp-android://` and contains `code=`.\n\nCopy the full `Location` URL and paste it below, or just the `code=` value.",
@@ -22,7 +26,9 @@
       "api_error": "Authenticated successfully but could not connect to the Bosch eBike API."
     },
     "abort": {
-      "already_configured": "This account is already configured."
+      "already_configured": "This account is already configured.",
+      "reauth_successful": "Re-authentication was successful.",
+      "wrong_account": "You logged in to a different account, or the bikes on this account have changed. Remove and re-add the integration instead."
     }
   }
 }

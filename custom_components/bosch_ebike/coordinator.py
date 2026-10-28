@@ -9,9 +9,10 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api.auth import create_session, refresh_session_token
+from .api.auth import create_session, is_refresh_token_rejected, refresh_session_token
 from .api.client import BoschEBikeClient
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LOCATION_UPDATE_INTERVAL
 
@@ -53,7 +54,11 @@ class TokenManager:
                     data={**self._config_entry.data, "token": new_token},
                 )
                 return BoschEBikeClient(session)
-            except Exception:
+            except Exception as err:
+                if is_refresh_token_rejected(err):
+                    raise ConfigEntryAuthFailed(
+                        "Bosch rejected the refresh token; log in again"
+                    ) from err
                 _LOGGER.debug("Token refresh failed, using existing token")
                 return BoschEBikeClient(create_session(token))
 
@@ -82,6 +87,8 @@ class _BoschEBikeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _get_client(self) -> BoschEBikeClient:
         try:
             return await self._token_manager.get_client()
+        except ConfigEntryAuthFailed:
+            raise
         except Exception as err:
             raise UpdateFailed(f"Authentication error: {err}") from err
 
