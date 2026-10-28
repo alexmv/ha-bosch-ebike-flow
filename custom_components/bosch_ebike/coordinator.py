@@ -5,8 +5,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar
 
+import requests
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -17,6 +19,8 @@ from .api.client import BoschEBikeClient
 from .const import DATA_UPDATE_INTERVAL, DOMAIN, LOCATION_UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 # Refresh the token when it expires within this many seconds.
 _TOKEN_REFRESH_MARGIN = 300
@@ -34,13 +38,13 @@ class TokenManager:
         self._config_entry = config_entry
         self._lock = asyncio.Lock()
 
-    async def get_client(self) -> BoschEBikeClient:
+    async def get_client(self, force_refresh: bool = False) -> BoschEBikeClient:
         """Return an authenticated client, refreshing the token if needed."""
         async with self._lock:
             token = self._config_entry.data["token"]
             expires_at = token.get("expires_at", 0)
 
-            if time.time() < expires_at - _TOKEN_REFRESH_MARGIN:
+            if not force_refresh and time.time() < expires_at - _TOKEN_REFRESH_MARGIN:
                 # Token is still fresh.
                 return BoschEBikeClient(create_session(token))
 
@@ -83,14 +87,34 @@ class _BoschEBikeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             config_entry=config_entry,
         )
         self._token_manager = token_manager
+        self._client: BoschEBikeClient | None = None
 
-    async def _get_client(self) -> BoschEBikeClient:
+    async def _get_client(self, force_refresh: bool = False) -> BoschEBikeClient:
         try:
-            return await self._token_manager.get_client()
+            return await self._token_manager.get_client(force_refresh)
         except ConfigEntryAuthFailed:
             raise
         except Exception as err:
             raise UpdateFailed(f"Authentication error: {err}") from err
+
+    async def _call(
+        self, method: Callable[[BoschEBikeClient], Callable[..., _T]], *args: Any
+    ) -> _T:
+        """Make an API call in the executor.
+
+        If the access token is rejected before it is due to expire, refresh it
+        and retry once.
+        """
+        if self._client is None:
+            self._client = await self._get_client()
+        try:
+            return await self.hass.async_add_executor_job(method(self._client), *args)
+        except requests.HTTPError as err:
+            if err.response is None or err.response.status_code != 401:
+                raise
+        _LOGGER.debug("Access token was rejected; refreshing and retrying")
+        self._client = await self._get_client(force_refresh=True)
+        return await self.hass.async_add_executor_job(method(self._client), *args)
 
 
 class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
@@ -113,18 +137,20 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
         self._bike_ids = bike_ids
 
     async def _async_update_data(self) -> dict[str, Any]:
-        client = await self._get_client()
+        self._client = await self._get_client()
 
         # Fetch activity summaries once for all bikes (sorted newest-first).
         rides_by_bike: dict[str, dict] = {}
         try:
-            rides_resp = await self.hass.async_add_executor_job(client.activity.get_summaries)
+            rides_resp = await self._call(lambda c: c.activity.get_summaries)
             for ride in rides_resp.get("data", []):
                 attrs = ride.get("attributes", ride)
                 bike_id = attrs.get("bikeId")
                 # First match per bike is the newest (sorted by -startTime).
                 if bike_id and bike_id not in rides_by_bike:
                     rides_by_bike[bike_id] = attrs
+        except ConfigEntryAuthFailed:
+            raise
         except Exception as err:
             _LOGGER.warning("Failed to fetch activity summaries: %s", err)
 
@@ -133,17 +159,19 @@ class BoschEBikeDataCoordinator(_BoschEBikeCoordinator):
             bike_data: dict[str, Any] = {}
 
             try:
-                bike_data["profile"] = await self.hass.async_add_executor_job(
-                    client.bike_profile.get, bike_id
-                )
+                bike_data["profile"] = await self._call(lambda c: c.bike_profile.get, bike_id)
+            except ConfigEntryAuthFailed:
+                raise
             except Exception as err:
                 _LOGGER.warning("Failed to fetch profile for bike %s: %s", bike_id, err)
                 bike_data["profile"] = None
 
             try:
-                bike_data["battery"] = await self.hass.async_add_executor_job(
-                    client.bike_profile.get_state_of_charge, bike_id
+                bike_data["battery"] = await self._call(
+                    lambda c: c.bike_profile.get_state_of_charge, bike_id
                 )
+            except ConfigEntryAuthFailed:
+                raise
             except Exception as err:
                 _LOGGER.warning("Failed to fetch SoC for bike %s: %s", bike_id, err)
                 bike_data["battery"] = None
@@ -174,14 +202,16 @@ class BoschEBikeLocationCoordinator(_BoschEBikeCoordinator):
         self._bcm_bike_ids = bcm_bike_ids
 
     async def _async_update_data(self) -> dict[str, Any]:
-        client = await self._get_client()
+        self._client = await self._get_client()
 
         data: dict[str, Any] = {}
         for bike_id in self._bcm_bike_ids:
             try:
-                data[bike_id] = await self.hass.async_add_executor_job(
-                    client.theft_detection.get_latest_locations, bike_id
+                data[bike_id] = await self._call(
+                    lambda c: c.theft_detection.get_latest_locations, bike_id
                 )
+            except ConfigEntryAuthFailed:
+                raise
             except Exception:
                 _LOGGER.warning("Failed to fetch location for bike %s", bike_id)
                 data[bike_id] = None

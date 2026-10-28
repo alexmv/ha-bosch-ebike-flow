@@ -63,6 +63,24 @@ class TestTokenManager:
         mock_hass.config_entries.async_update_entry.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_force_refresh_ignores_expiry(self, mock_hass, mock_entry):
+        mock_entry.data = {
+            "token": {
+                "access_token": "revoked",
+                "refresh_token": "rt",
+                "expires_at": time.time() + 3600,
+            }
+        }
+        new_token = {"access_token": "new", "refresh_token": "rt2", "expires_at": 9999999999}
+        mock_hass.async_add_executor_job.return_value = (MagicMock(), new_token)
+
+        manager = TokenManager(mock_hass, mock_entry)
+        await manager.get_client(force_refresh=True)
+
+        mock_hass.async_add_executor_job.assert_called_once()
+        mock_hass.config_entries.async_update_entry.assert_called_once()
+
+    @pytest.mark.asyncio
     async def test_refreshes_when_within_margin(self, mock_hass, mock_entry):
         mock_entry.data = {
             "token": {
