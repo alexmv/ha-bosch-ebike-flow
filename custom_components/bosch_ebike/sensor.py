@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -92,31 +93,76 @@ def _get_charge_cycles(data: dict[str, Any]) -> float | None:
 
 # --- Value extractors: range estimate ---
 
-# reachableRange array from the SoC API: [ECO, AUTO, SPORT, TURBO] in km.
-_RANGE_MODE_NAMES = ("eco", "auto", "sport", "turbo")
-_RANGE_AUTO_INDEX = 1
+# The reachableRange array from the SoC API (in km) lines up with the bike's
+# assist modes, as listed in the profile's driveUnit.driveUnitAssistModes,
+# minus the "0" (OFF) mode.  Which modes a bike has, and in what order,
+# depends on the drive unit.  If the profile does not list them, assume the
+# common ECO/AUTO/SPORT/TURBO layout.
+_DEFAULT_RANGE_MODES = (("eco", False), ("auto", True), ("sport", False), ("turbo", False))
 
 
-def _get_range_auto(data: dict[str, Any]) -> float | None:
+def _get_ranges(data: dict[str, Any]) -> list[Any] | None:
     battery = data.get("battery")
     if not isinstance(battery, dict):
         return None
     ranges = battery.get("reachableRange")
-    if isinstance(ranges, list) and len(ranges) > _RANGE_AUTO_INDEX:
-        val = ranges[_RANGE_AUTO_INDEX]
-        return float(val) if val is not None else None
-    return None
+    return ranges if isinstance(ranges, list) else None
+
+
+def _assist_mode_names(data: dict[str, Any]) -> dict[str, str]:
+    """Map assist mode IDs to their display names, as recorded on the last ride."""
+    ride = data.get("latest_ride")
+    usage = ride.get("assistModeUsage") if isinstance(ride, dict) else None
+    if not isinstance(usage, list):
+        return {}
+    return {
+        u["assistModeConfigId"]: u["name"]
+        for u in usage
+        if isinstance(u, dict)
+        and isinstance(u.get("assistModeConfigId"), str)
+        and isinstance(u.get("name"), str)
+    }
+
+
+def _range_modes(data: dict[str, Any]) -> tuple[tuple[str, bool], ...]:
+    """Return (attribute-name, is-auto) for each entry in reachableRange."""
+    profile = data.get("profile")
+    drive_unit = profile.get("driveUnit") if isinstance(profile, dict) else None
+    modes = drive_unit.get("driveUnitAssistModes") if isinstance(drive_unit, dict) else None
+    if not isinstance(modes, list):
+        return _DEFAULT_RANGE_MODES
+    names = _assist_mode_names(data)
+    result = []
+    for mode in modes:
+        mode_id = mode.get("id") if isinstance(mode, dict) else None
+        if not isinstance(mode_id, str) or mode_id == "0":
+            continue
+        name = names.get(mode_id, mode_id).lower().replace("+", "_plus")
+        result.append((re.sub(r"[^a-z0-9_]+", "_", name), mode_id.endswith("AUTO")))
+    return tuple(result)
+
+
+def _get_range_auto(data: dict[str, Any]) -> float | None:
+    """Range in AUTO mode, or the longest range if the bike has no AUTO mode."""
+    ranges = _get_ranges(data)
+    if not ranges:
+        return None
+    modes = _range_modes(data)
+    if any(is_auto for _, is_auto in modes):
+        for (_, is_auto), km in zip(modes, ranges, strict=False):
+            if is_auto:
+                return float(km) if km is not None else None
+        return None
+    known = [km for km in ranges if isinstance(km, (int, float))]
+    return float(max(known)) if known else None
 
 
 def _get_range_attrs(data: dict[str, Any]) -> dict[str, Any]:
-    battery = data.get("battery")
-    if not isinstance(battery, dict):
-        return {}
-    ranges = battery.get("reachableRange")
-    if not isinstance(ranges, list):
+    ranges = _get_ranges(data)
+    if ranges is None:
         return {}
     return {
-        f"range_{name}_km": ranges[i] for i, name in enumerate(_RANGE_MODE_NAMES) if i < len(ranges)
+        f"range_{name}_km": km for (name, _), km in zip(_range_modes(data), ranges, strict=False)
     }
 
 

@@ -68,7 +68,8 @@ class TestProfileSensors:
 
 class TestRangeSensor:
     def test_returns_auto_range(self, bike_data):
-        # Fixture has reachableRange: [52, 38, 25, 21]; AUTO is index 1.
+        # Fixture has reachableRange: [52, 38, 25, 21], and no assist modes in
+        # the profile, so the default layout puts AUTO at index 1.
         assert _get_range_auto(bike_data[BIKE_ID]) == 38.0
 
     def test_attrs_contain_all_modes(self, bike_data):
@@ -87,6 +88,65 @@ class TestRangeSensor:
     def test_none_when_range_missing(self):
         assert _get_range_auto({"battery": {}}) is None
         assert _get_range_attrs({"battery": {}}) == {}
+
+    def test_modes_from_profile(self):
+        # Mode layout as reported for a Performance Line bike; names come from
+        # the last ride's assistModeUsage.
+        data = {
+            "profile": {
+                "driveUnit": {
+                    "driveUnitAssistModes": [
+                        {"id": "0"},
+                        {"id": "A100M40040"},
+                        {"id": "A100E3AUTO"},
+                        {"id": "A100M40020"},
+                        {"id": "A100M40010"},
+                    ]
+                }
+            },
+            "battery": {"reachableRange": [33, 25, 16, 12]},
+            "latest_ride": {
+                "assistModeUsage": [
+                    {"assistModeConfigId": "0", "name": "OFF"},
+                    {"assistModeConfigId": "A100M40040", "name": "ECO"},
+                    {"assistModeConfigId": "A100M40020", "name": "SPORT"},
+                    {"assistModeConfigId": "A100M40010", "name": "TURBO"},
+                    {"assistModeConfigId": "A100E3AUTO", "name": "AUTO"},
+                ]
+            },
+        }
+        assert _get_range_auto(data) == 25.0
+        assert _get_range_attrs(data) == {
+            "range_eco_km": 33,
+            "range_auto_km": 25,
+            "range_sport_km": 16,
+            "range_turbo_km": 12,
+        }
+
+    def test_modes_without_names_or_auto(self):
+        data = {
+            "profile": {
+                "driveUnit": {
+                    "driveUnitAssistModes": [
+                        {"id": "0"},
+                        {"id": "A100M00040"},
+                        {"id": "A100MAAAA0"},
+                        {"id": "A100E00009"},
+                    ]
+                }
+            },
+            "battery": {"reachableRange": [60, 45, 30]},
+            "latest_ride": {
+                "assistModeUsage": [{"assistModeConfigId": "A100MAAAA0", "name": "TOUR+"}]
+            },
+        }
+        # No AUTO mode, so report the longest range.
+        assert _get_range_auto(data) == 60.0
+        assert _get_range_attrs(data) == {
+            "range_a100m00040_km": 60,
+            "range_tour_plus_km": 45,
+            "range_a100e00009_km": 30,
+        }
 
     def test_description_has_attrs_fn(self):
         desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "estimated_range")
