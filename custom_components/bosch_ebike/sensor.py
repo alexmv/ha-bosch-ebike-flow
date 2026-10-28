@@ -46,12 +46,16 @@ class BoschEBikeSensorEntityDescription(SensorEntityDescription):
 
 def _get_battery(data: dict[str, Any]) -> float | None:
     battery = data.get("battery")
-    if not isinstance(battery, dict):
-        return None
-    soc: float | None = battery.get("stateOfCharge")
-    if soc is not None:
-        return soc
-    return battery.get("soc")  # type: ignore[return-value]
+    if isinstance(battery, dict):
+        soc: float | None = battery.get("stateOfCharge")
+        if soc is None:
+            soc = battery.get("soc")
+        if soc is not None:
+            return soc
+    # No live state of charge (e.g. the SoC endpoint 404s when the bike has
+    # been offline); fall back to the level last recorded in the profile.
+    level: float | None = _get_battery_field("batteryLevel")(data)
+    return level
 
 
 # --- Value extractors: profile-based ---

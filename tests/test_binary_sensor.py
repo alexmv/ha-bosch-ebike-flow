@@ -40,3 +40,11 @@ class TestChargingSensor:
     def test_from_fixture(self, bike_data):
         """Fixture has chargingActive: false."""
         assert _make_sensor(bike_data).is_on is False
+
+    def test_falls_back_to_profile(self):
+        data = {BIKE_ID: {"battery": None, "profile": {"batteries": [{"isCharging": True}]}}}
+        assert _make_sensor(data).is_on is True
+
+    def test_none_when_profile_unknown_too(self):
+        data = {BIKE_ID: {"battery": None, "profile": {"batteries": [{"isCharging": None}]}}}
+        assert _make_sensor(data).is_on is None

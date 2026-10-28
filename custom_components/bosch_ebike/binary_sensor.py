@@ -76,6 +76,12 @@ class BoschEBikeChargingSensor(CoordinatorEntity[BoschEBikeDataCoordinator], Bin
         if bike_data is None:
             return None
         battery: Any = bike_data.get("battery")
-        if not isinstance(battery, dict):
-            return None
-        return battery.get("chargingActive")
+        if isinstance(battery, dict) and battery.get("chargingActive") is not None:
+            return bool(battery["chargingActive"])
+        # No live state of charge; fall back to the profile's last-known state.
+        profile: Any = bike_data.get("profile")
+        batteries = profile.get("batteries") if isinstance(profile, dict) else None
+        if isinstance(batteries, list) and batteries and isinstance(batteries[0], dict):
+            is_charging = batteries[0].get("isCharging")
+            return bool(is_charging) if is_charging is not None else None
+        return None

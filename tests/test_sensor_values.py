@@ -33,6 +33,12 @@ class TestGetBattery:
     def test_handles_zero_soc_via_fallback_key(self):
         assert _get_battery({"battery": {"soc": 0}}) == 0
 
+    def test_falls_back_to_profile_battery_level(self):
+        profile = {"batteries": [{"batteryLevel": 64}]}
+        assert _get_battery({"battery": None, "profile": profile}) == 64
+        assert _get_battery({"battery": {"stateOfCharge": None}, "profile": profile}) == 64
+        assert _get_battery({"battery": {"stateOfCharge": 80}, "profile": profile}) == 80
+
 
 class TestProfileSensors:
     @pytest.mark.parametrize(
