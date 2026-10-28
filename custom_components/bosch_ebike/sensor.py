@@ -133,6 +133,22 @@ def _get_ride_field(field: str) -> Callable[[dict[str, Any]], Any]:
     return _extract
 
 
+def _get_ride_co2_saved(data: dict[str, Any]) -> float | None:
+    """CO2 saved relative to making the same trip by car.
+
+    The API reports the car-equivalent emissions and the ride's own emissions
+    (from charging the battery) separately; the saving is the difference.
+    """
+    ride = data.get("latest_ride")
+    if ride is None:
+        return None
+    car = ride.get("co2EmissionsCarEquivalentGrams")
+    ebike = ride.get("co2EmissionsGrams")
+    if not isinstance(car, (int, float)) or not isinstance(ebike, (int, float)):
+        return None
+    return round(car - ebike, 3)
+
+
 def _get_ride_timestamp(data: dict[str, Any]) -> datetime | None:
     ride = data.get("latest_ride")
     if ride is None:
@@ -255,7 +271,7 @@ SENSOR_DESCRIPTIONS: tuple[BoschEBikeSensorEntityDescription, ...] = (
         name="Last Ride CO2 Saved",
         native_unit_of_measurement=UnitOfMass.GRAMS,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=_get_ride_field("co2EmissionsCarEquivalentGrams"),
+        value_fn=_get_ride_co2_saved,
     ),
     BoschEBikeSensorEntityDescription(
         key="last_ride_rider_energy_share",

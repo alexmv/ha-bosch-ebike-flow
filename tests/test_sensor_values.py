@@ -103,7 +103,7 @@ class TestRideSensors:
             ("last_ride_max_speed", 37.77),
             ("last_ride_avg_power", 161.0),
             ("last_ride_calories", 82.0),
-            ("last_ride_co2_saved", 725.254),
+            ("last_ride_co2_saved", 712.147),
             ("last_ride_rider_energy_share", 37),
             ("last_ride_elevation_gain", 11),
         ],
@@ -117,6 +117,13 @@ class TestRideSensors:
         for desc in SENSOR_DESCRIPTIONS:
             if desc.key.startswith("last_ride_"):
                 assert desc.value_fn(data) is None, desc.key
+
+
+class TestRideCO2Saved:
+    def test_none_when_a_field_is_missing(self):
+        desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == "last_ride_co2_saved")
+        assert desc.value_fn({"latest_ride": {"co2EmissionsCarEquivalentGrams": 725.0}}) is None
+        assert desc.value_fn({"latest_ride": {"co2EmissionsGrams": 13.0}}) is None
 
 
 class TestRideTimestamp:
