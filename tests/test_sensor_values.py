@@ -11,6 +11,7 @@ from custom_components.bosch_ebike.sensor import (
     SENSOR_DESCRIPTIONS,
     _get_battery,
     _get_charge_cycles,
+    _get_odometer,
     _get_range_attrs,
     _get_range_auto,
     _get_ride_timestamp,
@@ -44,7 +45,6 @@ class TestProfileSensors:
     @pytest.mark.parametrize(
         ("key", "expected"),
         [
-            ("odometer", 2037430.0),
             ("battery_capacity", 560.0),
             ("motor_hours", 202),
             ("battery_energy_delivered", 20742),
@@ -53,6 +53,20 @@ class TestProfileSensors:
     def test_profile_sensor_value(self, bike_data, key, expected):
         desc = next(d for d in SENSOR_DESCRIPTIONS if d.key == key)
         assert desc.value_fn(bike_data[BIKE_ID]) == expected
+
+    def test_odometer_prefers_soc(self, bike_data):
+        # Fixture: SoC odometer 2037434, profile totalDistanceTraveled 2037430.
+        assert _get_odometer(bike_data[BIKE_ID]) == 2037434.0
+
+    def test_odometer_never_goes_backwards(self, bike_data):
+        data = bike_data[BIKE_ID]
+        data["battery"]["odometer"] = 2000000
+        assert _get_odometer(data) == 2037430.0
+
+    def test_odometer_without_soc(self, bike_data):
+        data = bike_data[BIKE_ID]
+        data["battery"] = None
+        assert _get_odometer(data) == 2037430.0
 
     def test_charge_cycles(self, bike_data):
         assert _get_charge_cycles(bike_data[BIKE_ID]) == 36.1

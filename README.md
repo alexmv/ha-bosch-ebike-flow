@@ -43,7 +43,7 @@ Each bike appears as an HA device with these sensors:
 | Sensor                   | Unit      | Source              |
 | ------------------------ | --------- | ------------------- |
 | Battery                  | %         | State of charge API |
-| Odometer                 | m         | Drive unit profile  |
+| Odometer                 | m         | SoC API / profile   |
 | Battery Capacity         | Wh        | Battery profile     |
 | Charge Cycles            | —         | Battery profile     |
 | Motor Hours              | h         | Drive unit profile  |

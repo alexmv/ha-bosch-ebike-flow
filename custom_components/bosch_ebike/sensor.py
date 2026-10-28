@@ -75,6 +75,23 @@ def _get_profile_field(*keys: str) -> Callable[[dict[str, Any]], Any]:
     return _extract
 
 
+def _get_odometer(data: dict[str, Any]) -> float | None:
+    """Total distance, from whichever of SoC and profile is further along.
+
+    The SoC endpoint's odometer is updated by the ConnectModule and is usually
+    fresher than the profile's.  But the sensor is TOTAL_INCREASING, where any
+    decrease reads as a meter reset, so never let switching sources make the
+    value go backwards.
+    """
+    battery = data.get("battery")
+    readings = [
+        battery.get("odometer") if isinstance(battery, dict) else None,
+        _get_profile_field("driveUnit", "totalDistanceTraveled")(data),
+    ]
+    known = [float(r) for r in readings if isinstance(r, (int, float))]
+    return max(known) if known else None
+
+
 def _get_battery_field(field: str) -> Callable[[dict[str, Any]], Any]:
     """Get a field from the first battery in the profile."""
 
@@ -229,7 +246,7 @@ SENSOR_DESCRIPTIONS: tuple[BoschEBikeSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfLength.METERS,
         device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=_get_profile_field("driveUnit", "totalDistanceTraveled"),
+        value_fn=_get_odometer,
     ),
     BoschEBikeSensorEntityDescription(
         key="battery_capacity",
