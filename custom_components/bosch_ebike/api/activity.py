@@ -1,5 +1,7 @@
 """Activity tracking and ride summary services."""
 
+from typing import Any
+
 from ._base import BaseService
 
 ACTIVITY_URL = "https://obc-rider-activity.prod.connected-biking.cloud"
@@ -10,7 +12,7 @@ class ActivityService(BaseService):
 
     BASE_URL = ACTIVITY_URL
 
-    def get_summaries(self, page=0, size=20):
+    def get_summaries(self, page: int = 0, size: int = 20) -> Any:
         """Get paginated activity summaries, newest first.
 
         The APK uses sort=-startTime (dash prefix for descending),

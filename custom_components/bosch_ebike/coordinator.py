@@ -102,8 +102,8 @@ class _BoschEBikeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         token_manager: TokenManager,
         *,
         name: str,
-        update_interval,
-        config_entry,
+        update_interval: timedelta,
+        config_entry: ConfigEntry,
     ) -> None:
         super().__init__(
             hass,

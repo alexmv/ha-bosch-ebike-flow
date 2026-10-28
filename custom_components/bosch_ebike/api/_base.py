@@ -2,6 +2,9 @@
 
 import logging
 import uuid
+from typing import Any
+
+import requests
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +17,7 @@ _DEFAULT_HEADERS = {
 }
 
 
-def _check_response(resp):
+def _check_response(resp: requests.Response) -> None:
     """Log response body on error, then raise."""
     if not resp.ok:
         # Some endpoints use 404 to mean "no data yet"; the caller decides
@@ -34,20 +37,26 @@ class BaseService:
 
     BASE_URL: str = ""
 
-    def __init__(self, session):
+    def __init__(self, session: requests.Session) -> None:
         self._session = session
 
-    def _url(self, path):
+    def _url(self, path: str) -> str:
         return self.BASE_URL.rstrip("/") + "/" + path.lstrip("/")
 
-    def _headers(self, extra=None):
+    def _headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
         """Build headers: defaults + X-Request-ID + any extras."""
         h = {**_DEFAULT_HEADERS, "X-Request-ID": str(uuid.uuid4())}
         if extra:
             h.update(extra)
         return h
 
-    def _get(self, path, params=None, headers=None, **kwargs):
+    def _get(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
         kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.get(
             self._url(path), params=params, headers=self._headers(headers), **kwargs
@@ -55,7 +64,15 @@ class BaseService:
         _check_response(resp)
         return resp
 
-    def _post(self, path, json=None, data=None, params=None, headers=None, **kwargs):
+    def _post(
+        self,
+        path: str,
+        json: Any = None,
+        data: Any = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
         kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.post(
             self._url(path),
@@ -68,7 +85,15 @@ class BaseService:
         _check_response(resp)
         return resp
 
-    def _put(self, path, json=None, data=None, params=None, headers=None, **kwargs):
+    def _put(
+        self,
+        path: str,
+        json: Any = None,
+        data: Any = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
         kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.put(
             self._url(path),
@@ -81,7 +106,13 @@ class BaseService:
         _check_response(resp)
         return resp
 
-    def _patch(self, path, json=None, headers=None, **kwargs):
+    def _patch(
+        self,
+        path: str,
+        json: Any = None,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
         kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.patch(
             self._url(path), json=json, headers=self._headers(headers), **kwargs
@@ -89,7 +120,14 @@ class BaseService:
         _check_response(resp)
         return resp
 
-    def _delete(self, path, params=None, json=None, headers=None, **kwargs):
+    def _delete(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        headers: dict[str, str] | None = None,
+        **kwargs: Any,
+    ) -> requests.Response:
         kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.delete(
             self._url(path), params=params, json=json, headers=self._headers(headers), **kwargs
