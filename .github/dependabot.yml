@@ -4,20 +4,24 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ["*"]
-        minimum-version-age: 7
 
-  - package-ecosystem: pip
+  - package-ecosystem: uv
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       python-deps:
         patterns: ["*"]
-        exclude-patterns: ["homeassistant"]
-        minimum-version-age: 7
-      homeassistant:
-        patterns: ["homeassistant"]
-        minimum-version-age: 90
+    ignore:
+      # The tests run against the oldest Home Assistant that hacs.json
+      # supports.  These two move in lockstep (the plugin pins an exact
+      # homeassistant version), and are bumped by hand along with hacs.json.
+      - dependency-name: homeassistant
+      - dependency-name: pytest-homeassistant-custom-component
