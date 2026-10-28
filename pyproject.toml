@@ -40,12 +40,17 @@ select = [
     "RUF",   # ruff-specific
     "ASYNC", # flake8-async
     "PT",    # flake8-pytest-style
+    "S",     # flake8-bandit
 ]
 ignore = [
     "E501",   # line length handled by formatter
     "TCH",    # HA uses runtime imports, not TYPE_CHECKING blocks
     "SIM105", # try/except/pass is clearer than contextlib.suppress in tests
+    "S101",   # assert is how pytest checks, and how HA code narrows types
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"] # fake tokens
 
 [tool.ruff.lint.isort]
 known-first-party = ["custom_components.bosch_ebike"]
