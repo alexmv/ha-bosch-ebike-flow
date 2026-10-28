@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from custom_components.bosch_ebike.api._base import BaseService, _check_response
+from custom_components.bosch_ebike.api._base import REQUEST_TIMEOUT, BaseService, _check_response
 from custom_components.bosch_ebike.api.activity import ActivityService
 from custom_components.bosch_ebike.api.antitheft import TheftDetectionService
 from custom_components.bosch_ebike.api.bike import BikeProfileService
@@ -39,6 +39,20 @@ class TestBaseService:
         headers = svc._headers({"Custom": "value"})
         assert headers["Custom"] == "value"
         assert headers["Accept"] == "application/json"
+
+    def test_requests_have_default_timeout(self):
+        session = MagicMock()
+        svc = BaseService(session)
+        svc.BASE_URL = "https://example.com"
+        svc._get("v1/test")
+        assert session.get.call_args.kwargs["timeout"] == REQUEST_TIMEOUT
+
+    def test_timeout_can_be_overridden(self):
+        session = MagicMock()
+        svc = BaseService(session)
+        svc.BASE_URL = "https://example.com"
+        svc._get("v1/test", timeout=5)
+        assert session.get.call_args.kwargs["timeout"] == 5
 
 
 class TestCheckResponse:

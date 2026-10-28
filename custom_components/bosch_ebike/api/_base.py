@@ -5,6 +5,10 @@ import uuid
 
 _LOGGER = logging.getLogger(__name__)
 
+# Seconds to wait for the Bosch cloud before giving up on a request.  Without
+# a timeout, a stalled connection would tie up an executor thread forever.
+REQUEST_TIMEOUT = 30
+
 _DEFAULT_HEADERS = {
     "Accept": "application/json",
 }
@@ -41,6 +45,7 @@ class BaseService:
         return h
 
     def _get(self, path, params=None, headers=None, **kwargs):
+        kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.get(
             self._url(path), params=params, headers=self._headers(headers), **kwargs
         )
@@ -48,6 +53,7 @@ class BaseService:
         return resp
 
     def _post(self, path, json=None, data=None, params=None, headers=None, **kwargs):
+        kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.post(
             self._url(path),
             json=json,
@@ -60,6 +66,7 @@ class BaseService:
         return resp
 
     def _put(self, path, json=None, data=None, params=None, headers=None, **kwargs):
+        kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.put(
             self._url(path),
             json=json,
@@ -72,6 +79,7 @@ class BaseService:
         return resp
 
     def _patch(self, path, json=None, headers=None, **kwargs):
+        kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.patch(
             self._url(path), json=json, headers=self._headers(headers), **kwargs
         )
@@ -79,6 +87,7 @@ class BaseService:
         return resp
 
     def _delete(self, path, params=None, json=None, headers=None, **kwargs):
+        kwargs.setdefault("timeout", REQUEST_TIMEOUT)
         resp = self._session.delete(
             self._url(path), params=params, json=json, headers=self._headers(headers), **kwargs
         )

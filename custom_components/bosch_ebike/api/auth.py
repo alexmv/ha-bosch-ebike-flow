@@ -7,6 +7,8 @@ import requests
 from authlib.common.security import generate_token
 from authlib.integrations.requests_client import OAuth2Session
 
+from ._base import REQUEST_TIMEOUT
+
 CLIENT_ID = "one-bike-app"
 AUTH_BASE = "https://p9.authz.bosch.com/auth/realms/obc/protocol/openid-connect"
 TOKEN_URL = f"{AUTH_BASE}/token"
@@ -54,6 +56,7 @@ def exchange_code(code: str, code_verifier: str) -> dict:
             "redirect_uri": REDIRECT_URI,
             "code_verifier": code_verifier,
         },
+        timeout=REQUEST_TIMEOUT,
     )
     resp.raise_for_status()
     token: dict = resp.json()
@@ -62,7 +65,7 @@ def exchange_code(code: str, code_verifier: str) -> dict:
 
 def create_session(token: dict) -> OAuth2Session:
     """Create an authenticated OAuth2Session from an existing token dict."""
-    return OAuth2Session(client_id=CLIENT_ID, token=token)
+    return OAuth2Session(client_id=CLIENT_ID, token=token, default_timeout=REQUEST_TIMEOUT)
 
 
 def refresh_session_token(token: dict) -> tuple[OAuth2Session, dict]:
@@ -70,6 +73,6 @@ def refresh_session_token(token: dict) -> tuple[OAuth2Session, dict]:
 
     Returns (session, new_token_dict) tuple.
     """
-    client = OAuth2Session(client_id=CLIENT_ID, token={})
+    client = OAuth2Session(client_id=CLIENT_ID, token={}, default_timeout=REQUEST_TIMEOUT)
     new_token = client.refresh_token(TOKEN_URL, refresh_token=token["refresh_token"])
     return client, dict(new_token)
