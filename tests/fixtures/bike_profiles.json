@@ -84,7 +84,94 @@
       "tuningDetection": {
         "counter": 0,
         "isDetected": false
-      }
+      },
+      "driveUnitAssistModes": [
+        {
+          "accelerationResponse": null,
+          "assistanceLevel": null,
+          "color": null,
+          "id": "0",
+          "isOffMode": null,
+          "longName": null,
+          "maximumBikeSpeed": null,
+          "maximumMotorTorque": null,
+          "reachableRange": 0.0,
+          "shortName": null,
+          "slot": null,
+          "statistics": {
+            "consumedEnergy": 12.0,
+            "distance": 105266.0
+          }
+        },
+        {
+          "accelerationResponse": null,
+          "assistanceLevel": null,
+          "color": null,
+          "id": "A100M00040",
+          "isOffMode": null,
+          "longName": null,
+          "maximumBikeSpeed": null,
+          "maximumMotorTorque": null,
+          "reachableRange": 59.0,
+          "shortName": null,
+          "slot": null,
+          "statistics": {
+            "consumedEnergy": 559.0,
+            "distance": 141877.0
+          }
+        },
+        {
+          "accelerationResponse": null,
+          "assistanceLevel": null,
+          "color": null,
+          "id": "A100M0AUTO",
+          "isOffMode": null,
+          "longName": null,
+          "maximumBikeSpeed": null,
+          "maximumMotorTorque": null,
+          "reachableRange": 42.0,
+          "shortName": null,
+          "slot": null,
+          "statistics": {
+            "consumedEnergy": 25039.0,
+            "distance": 2882701.0
+          }
+        },
+        {
+          "accelerationResponse": null,
+          "assistanceLevel": null,
+          "color": null,
+          "id": "A100E00009",
+          "isOffMode": null,
+          "longName": null,
+          "maximumBikeSpeed": null,
+          "maximumMotorTorque": null,
+          "reachableRange": 29.0,
+          "shortName": null,
+          "slot": null,
+          "statistics": {
+            "consumedEnergy": 825.0,
+            "distance": 83940.0
+          }
+        },
+        {
+          "accelerationResponse": null,
+          "assistanceLevel": null,
+          "color": null,
+          "id": "A100M00010",
+          "isOffMode": null,
+          "longName": null,
+          "maximumBikeSpeed": null,
+          "maximumMotorTorque": null,
+          "reachableRange": 23.0,
+          "shortName": null,
+          "slot": null,
+          "statistics": {
+            "consumedEnergy": 2419.0,
+            "distance": 224141.0
+          }
+        }
+      ]
     },
     "headUnit": {
       "productName": "Kiox 500",

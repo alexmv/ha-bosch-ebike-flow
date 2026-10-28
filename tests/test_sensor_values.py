@@ -74,13 +74,25 @@ class TestProfileSensors:
 
 class TestRangeSensor:
     def test_returns_auto_range(self, bike_data):
-        # Fixture has reachableRange: [52, 38, 25, 21], and no assist modes in
-        # the profile, so the default layout puts AUTO at index 1.
+        # Fixture has reachableRange: [52, 38, 25, 21], and the profile's
+        # modes are OFF, ECO, AUTO, CARGO, TURBO.
         assert _get_range_auto(bike_data[BIKE_ID]) == 38.0
 
     def test_attrs_contain_all_modes(self, bike_data):
         attrs = _get_range_attrs(bike_data[BIKE_ID])
         assert attrs == {
+            "range_eco_km": 52,
+            "range_auto_km": 38,
+            "range_cargo_km": 25,
+            "range_turbo_km": 21,
+        }
+
+    def test_default_layout_when_profile_lacks_modes(self, bike_data):
+        # Profiles from before the API listed the assist modes.
+        data = bike_data[BIKE_ID]
+        del data["profile"]["driveUnit"]["driveUnitAssistModes"]
+        assert _get_range_auto(data) == 38.0
+        assert _get_range_attrs(data) == {
             "range_eco_km": 52,
             "range_auto_km": 38,
             "range_sport_km": 25,

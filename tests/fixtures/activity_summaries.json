@@ -34,7 +34,38 @@
           "amountOfNormalBrakeEvents": 33,
           "amountOfAbsInterventionEvents": 0
         },
-        "assistModeUsage": [],
+        "assistModeUsage": [
+          {
+            "assistModeConfigId": "0",
+            "assistModeUsage": 2,
+            "color": 4278190080,
+            "name": "OFF"
+          },
+          {
+            "assistModeConfigId": "A100E00009",
+            "assistModeUsage": 26,
+            "color": 4288037869,
+            "name": "CARGO"
+          },
+          {
+            "assistModeConfigId": "A100M00010",
+            "assistModeUsage": 0,
+            "color": 4293001237,
+            "name": "TURBO"
+          },
+          {
+            "assistModeConfigId": "A100M00040",
+            "assistModeUsage": 1645,
+            "color": 4286103072,
+            "name": "ECO"
+          },
+          {
+            "assistModeConfigId": "A100M0AUTO",
+            "assistModeUsage": 2617,
+            "color": 4278232536,
+            "name": "AUTO"
+          }
+        ],
         "riderEnergyShare": 37,
         "co2EmissionsGrams": 13.107,
         "co2EmissionsCarEquivalentGrams": 725.254,
@@ -73,7 +104,38 @@
           "amountOfNormalBrakeEvents": 32,
           "amountOfAbsInterventionEvents": 0
         },
-        "assistModeUsage": [],
+        "assistModeUsage": [
+          {
+            "assistModeConfigId": "0",
+            "assistModeUsage": 2,
+            "color": 4278190080,
+            "name": "OFF"
+          },
+          {
+            "assistModeConfigId": "A100E00009",
+            "assistModeUsage": 26,
+            "color": 4288037869,
+            "name": "CARGO"
+          },
+          {
+            "assistModeConfigId": "A100M00010",
+            "assistModeUsage": 0,
+            "color": 4293001237,
+            "name": "TURBO"
+          },
+          {
+            "assistModeConfigId": "A100M00040",
+            "assistModeUsage": 1645,
+            "color": 4286103072,
+            "name": "ECO"
+          },
+          {
+            "assistModeConfigId": "A100M0AUTO",
+            "assistModeUsage": 2617,
+            "color": 4278232536,
+            "name": "AUTO"
+          }
+        ],
         "riderEnergyShare": 37,
         "co2EmissionsGrams": 13.392,
         "co2EmissionsCarEquivalentGrams": 741.024,
