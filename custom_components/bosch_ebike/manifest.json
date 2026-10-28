@@ -6,6 +6,6 @@
   "documentation": "https://github.com/alexmv/ha-bosch-ebike-flow",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/alexmv/ha-bosch-ebike-flow/issues",
-  "requirements": ["authlib>=1.5.2", "requests>=2.32.3"],
+  "requirements": ["authlib>=1.5.2"],
   "version": "1.0.0"
 }
