@@ -117,6 +117,19 @@ class TestRangeSensor:
         assert _get_range_auto({"battery": None}) is None
         assert _get_range_attrs({"battery": None}) == {}
 
+    def test_falls_back_to_profile_ranges(self, bike_data):
+        # Profile per-mode ranges in the fixture: ECO 59, AUTO 42, CARGO 29,
+        # TURBO 23.
+        data = bike_data[BIKE_ID]
+        data["battery"] = None
+        assert _get_range_auto(data) == 42.0
+        assert _get_range_attrs(data) == {
+            "range_eco_km": 59.0,
+            "range_auto_km": 42.0,
+            "range_cargo_km": 29.0,
+            "range_turbo_km": 23.0,
+        }
+
     def test_none_when_range_missing(self):
         assert _get_range_auto({"battery": {}}) is None
         assert _get_range_attrs({"battery": {}}) == {}

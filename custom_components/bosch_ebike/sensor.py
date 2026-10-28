@@ -122,12 +122,31 @@ def _get_charge_cycles(data: dict[str, Any]) -> float | None:
 _DEFAULT_RANGE_MODES = (("eco", False), ("auto", True), ("sport", False), ("turbo", False))
 
 
+def _profile_assist_modes(data: dict[str, Any]) -> list[dict[str, Any]] | None:
+    """The profile's assist modes, minus OFF, or None if it does not list them."""
+    profile = data.get("profile")
+    drive_unit = profile.get("driveUnit") if isinstance(profile, dict) else None
+    modes = drive_unit.get("driveUnitAssistModes") if isinstance(drive_unit, dict) else None
+    if not isinstance(modes, list):
+        return None
+    return [
+        mode
+        for mode in modes
+        if isinstance(mode, dict) and isinstance(mode.get("id"), str) and mode["id"] != "0"
+    ]
+
+
 def _get_ranges(data: dict[str, Any]) -> list[Any] | None:
     battery = data.get("battery")
-    if not isinstance(battery, dict):
+    ranges = battery.get("reachableRange") if isinstance(battery, dict) else None
+    if isinstance(ranges, list):
+        return ranges
+    # No live SoC (e.g. the bike has been offline for a while); fall back to
+    # the per-mode ranges from the profile, as of its last sync.
+    modes = _profile_assist_modes(data)
+    if not modes:
         return None
-    ranges = battery.get("reachableRange")
-    return ranges if isinstance(ranges, list) else None
+    return [mode.get("reachableRange") for mode in modes]
 
 
 def _assist_mode_names(data: dict[str, Any]) -> dict[str, str]:
@@ -147,17 +166,13 @@ def _assist_mode_names(data: dict[str, Any]) -> dict[str, str]:
 
 def _range_modes(data: dict[str, Any]) -> tuple[tuple[str, bool], ...]:
     """Return (attribute-name, is-auto) for each entry in reachableRange."""
-    profile = data.get("profile")
-    drive_unit = profile.get("driveUnit") if isinstance(profile, dict) else None
-    modes = drive_unit.get("driveUnitAssistModes") if isinstance(drive_unit, dict) else None
-    if not isinstance(modes, list):
+    modes = _profile_assist_modes(data)
+    if modes is None:
         return _DEFAULT_RANGE_MODES
     names = _assist_mode_names(data)
     result = []
     for mode in modes:
-        mode_id = mode.get("id") if isinstance(mode, dict) else None
-        if not isinstance(mode_id, str) or mode_id == "0":
-            continue
+        mode_id = mode["id"]
         name = names.get(mode_id, mode_id).lower().replace("+", "_plus")
         result.append((re.sub(r"[^a-z0-9_]+", "_", name), mode_id.endswith("AUTO")))
     return tuple(result)
